@@ -12,6 +12,6 @@ gl_generator = "0.14.0"
 
 [dependencies]
 # anyhow = "1.0.40"
-crossfont = "0.3.0"
+# crossfont = "0.3.0"
 glutin = "0.26.0"
-unicode-width = "0.1.8"
+# unicode-width = "0.1.8"
