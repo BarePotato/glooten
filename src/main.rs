@@ -32,6 +32,14 @@ fn main() {
 
     gl::load_with(|c_ptr| windowed_context.get_proc_address(c_ptr) as *const _);
 
+    let font = Font { normal: "FiraCode Nerd Font".to_string(), size: Size(FontSize::new(18.0)), ..Default::default() };
+
+    let dpr = windowed_context.window().scale_factor();
+
+    let rasterizer = Rasterizer::new(dpr as f32, false).unwrap();
+
+    // let cache = GlyphCache::new(rasterizer, &font, loader);
+
     event_loop.run(move |event, _window_target, control_flow| {
         *control_flow = ControlFlow::Wait;
 
@@ -86,7 +94,6 @@ impl Default for Size {
 pub struct Font {
     offset: Vector2<i8>,
     glyph_offset: Vector2<i8>,
-    use_thin_strokes: bool,
     normal: String,
     pub size: Size,
 }
