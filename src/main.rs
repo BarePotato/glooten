@@ -15,8 +15,6 @@ mod gl {
     include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
 
-const EIGHT: f32 = 8.0 / 255.0;
-
 fn main() {
     let event_loop = EventLoop::new();
 
@@ -46,7 +44,7 @@ fn main() {
                 _ => {}
             },
             GlutinEvent::RedrawRequested(_) => {
-                clear_buffer();
+                clear_buffer(&Color::eight);
                 windowed_context.swap_buffers().unwrap();
             }
             _ => {}
@@ -54,9 +52,11 @@ fn main() {
     });
 }
 
-fn clear_buffer() {
+fn clear_buffer(color: &Color) {
+    let color = color.as_gl();
+
     unsafe {
-        gl::ClearColor(EIGHT, EIGHT, EIGHT, 1.0);
+        gl::ClearColor(color.r, color.g, color.b, color.a);
         gl::Clear(gl::COLOR_BUFFER_BIT);
     };
 }
@@ -65,4 +65,34 @@ fn make_current_context(
     windowed_context: ContextWrapper<NotCurrent, GlutinWindow>,
 ) -> ContextWrapper<PossiblyCurrent, GlutinWindow> {
     unsafe { windowed_context.make_current().unwrap() }
+}
+
+#[allow(dead_code, non_camel_case_types)]
+enum Color {
+    rgb(u8, u8, u8, u8),
+    gl(f32, f32, f32, f32),
+    eight,
+}
+
+impl Color {
+    fn as_gl(&self) -> glColor {
+        let (r, g, b, a) = match self {
+            Color::rgb(r, g, b, a) => (*r as f32 / 255.0, *g as f32 / 255.0, *b as f32 / 255.0, *a as f32 / 255.0),
+            Color::gl(r, g, b, a) => (*r, *g, *b, *a),
+            Color::eight => {
+                let e: f32 = 8.0 / 255.0;
+                (e, e, e, 1.0)
+            }
+        };
+
+        glColor { r, g, b, a }
+    }
+}
+
+#[allow(non_camel_case_types)]
+struct glColor {
+    r: f32,
+    g: f32,
+    b: f32,
+    a: f32,
 }
