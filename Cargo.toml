@@ -11,7 +11,9 @@ build = "build.rs"
 gl_generator = "0.14.0"
 
 [dependencies]
+freetype-rs = "0.28.0"
 # anyhow = "1.0.40"
 # crossfont = "0.3.0"
 glutin = "0.26.0"
+# unicode-normalization = "0.1.17"
 # unicode-width = "0.1.8"
