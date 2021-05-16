@@ -16,15 +16,18 @@ use freetype::{face::LoadFlag, Library};
 // use unicode_normalization::UnicodeNormalization;
 
 use glutin::{
+    dpi::LogicalSize,
     event::{Event as GlutinEvent, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::{Window as GlutinWindow, WindowBuilder},
     ContextBuilder, ContextWrapper, NotCurrent, PossiblyCurrent,
 };
 
-mod gl {
+pub(crate) mod gl {
     include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
+
+mod shader;
 
 struct Vec2i {
     x: i32,
@@ -40,7 +43,11 @@ struct Character {
 
 fn main() {
     let event_loop = EventLoop::new();
-    let window_builder = WindowBuilder::new().with_title("GL Font Things, Oof!");
+    let window_builder = WindowBuilder::new()
+        .with_title("GL Font Things, Oof!")
+        .with_resizable(false)
+        .with_inner_size(LogicalSize::new(800.0, 600.0));
+
     let windowed_context =
         make_current_context(ContextBuilder::new().build_windowed(window_builder, &event_loop).unwrap());
 
@@ -94,31 +101,9 @@ fn main() {
         characters.insert(c as u8 as char, character);
     }
 
-    let (shader_v, shader_f) = (
-        r#"#version 330 core
-layout (location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
-out vec2 TexCoords;
+    let (shader_v, shader_f) = (include_str!("../shader/shader.v.glsl"), include_str!("../shader/shader.f.glsl"));
 
-uniform mat4 projection;
-
-void main()
-{
-    gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);
-    TexCoords = vertex.zw;
-}"#,
-        r#"#version 330 core
-in vec2 TexCoords;
-out vec4 color;
-
-uniform sampler2D text;
-uniform vec3 textColor;
-
-void main()
-{    
-    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
-    color = vec4(textColor, 1.0) * sampled;
-}"#,
-    );
+    let shader_program = shader::CharShaderProgram::new(shader_v, shader_f);
 
     unsafe {
         gl::Enable(gl::BLEND);
@@ -164,7 +149,17 @@ void main()
             GlutinEvent::RedrawRequested(_) => {
                 clear_buffer(&Color::eight);
 
-                draw_text(0, "Some text", 50.0, 50.0, 1.0, Color::rgb(128, 0, 0, 255).as_gl(), vao, vbo, &characters);
+                draw_text(
+                    shader_program.id,
+                    "Some text",
+                    50.0,
+                    50.0,
+                    1.0,
+                    Color::rgb(128, 0, 0, 255).as_gl(),
+                    vao,
+                    vbo,
+                    &characters,
+                );
 
                 windowed_context.swap_buffers().unwrap();
             }
@@ -184,10 +179,9 @@ fn draw_text(
     vbo: u32,
     characters: &HashMap<char, Character>,
 ) {
-    // activate shader TODO/FIXME
-    // shader_program.activate();
-
     unsafe {
+        gl::UseProgram(shader_program);
+
         gl::Uniform3f(
             gl::GetUniformLocation(shader_program, "textColor".as_ptr() as *const i8),
             color.r,
