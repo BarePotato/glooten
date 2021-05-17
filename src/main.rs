@@ -29,11 +29,13 @@ pub(crate) mod gl {
 
 mod shader;
 
+#[derive(Debug)]
 struct Vec2i {
     x: i32,
     y: i32,
 }
 
+#[derive(Debug)]
 struct Character {
     tex_id: u32,
     size: Vec2i,
@@ -110,11 +112,6 @@ fn main() {
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
     };
 
-    // projection matrix TODO/FIXME
-    // for the shader_program, orthographic that will match our window in this case
-    // let projection = windowed_context.window().inner_size(); // make it a mat4
-    // still need to load shader_program
-
     let (vao, vbo) = (u32::default(), u32::default());
     unsafe {
         gl::GenVertexArrays(1, vao as *mut u32);
@@ -155,7 +152,7 @@ fn main() {
                     50.0,
                     50.0,
                     1.0,
-                    Color::rgb(128, 0, 0, 255).as_gl(),
+                    Color::rgb(255, 0, 0, 255).as_gl(),
                     vao,
                     vbo,
                     &characters,
@@ -181,6 +178,15 @@ fn draw_text(
 ) {
     unsafe {
         gl::UseProgram(shader_program);
+
+        gl::Viewport(0, 0, 800, 600);
+        gl::Uniform4f(
+            gl::GetUniformLocation(shader_program, "projection".as_ptr() as *const i8),
+            0.0,
+            0.0,
+            800.0,
+            600.0,
+        );
 
         gl::Uniform3f(
             gl::GetUniformLocation(shader_program, "textColor".as_ptr() as *const i8),
