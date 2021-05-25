@@ -64,7 +64,7 @@ pub fn create_shader(kind: GLenum, source: &str) -> GLuint {
     let shader = unsafe {
         let shader = gl::CreateShader(kind);
 
-        gl::ShaderSource(shader, 1, &(source.as_ptr() as *const _), len.as_ptr());
+        gl::ShaderSource(shader, 1, source.as_ptr() as *const *const i8 , len.as_ptr());
         gl::CompileShader(shader);
 
         shader

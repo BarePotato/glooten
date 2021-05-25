@@ -29,6 +29,8 @@ pub(crate) mod gl {
 
 mod shader;
 
+const WIN_SIZE: (f32, f32) = (800.0, 600.0);
+
 #[derive(Debug)]
 struct Vec2i {
     x: i32,
@@ -48,7 +50,7 @@ fn main() {
     let window_builder = WindowBuilder::new()
         .with_title("GL Font Things, Oof!")
         .with_resizable(false)
-        .with_inner_size(LogicalSize::new(800.0, 600.0));
+        .with_inner_size(LogicalSize::new(WIN_SIZE.0, WIN_SIZE.1));
 
     let windowed_context =
         make_current_context(ContextBuilder::new().build_windowed(window_builder, &event_loop).unwrap());
@@ -179,13 +181,13 @@ fn draw_text(
     unsafe {
         gl::UseProgram(shader_program);
 
-        gl::Viewport(0, 0, 800, 600);
+        gl::Viewport(0, 0, WIN_SIZE.0 as gl::types::GLsizei, WIN_SIZE.1 as gl::types::GLsizei);
         gl::Uniform4f(
             gl::GetUniformLocation(shader_program, "projection".as_ptr() as *const i8),
             0.0,
             0.0,
-            800.0,
-            600.0,
+            WIN_SIZE.0,
+            WIN_SIZE.1,
         );
 
         gl::Uniform3f(
