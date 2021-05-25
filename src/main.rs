@@ -23,9 +23,13 @@ use glutin::{
     ContextBuilder, ContextWrapper, NotCurrent, PossiblyCurrent,
 };
 
+use nalgebra::{Matrix4, Vector};
+
 pub(crate) mod gl {
     include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
+
+use gl::types::{GLsizei, GLuint};
 
 mod shader;
 
@@ -72,21 +76,21 @@ fn main() {
     for c in 0..128 {
         font_face.load_char(c, LoadFlag::RENDER).unwrap();
 
-        let texture = u32::default();
+        let mut texture: GLuint = 0;
 
         unsafe {
-            gl::GenTextures(1, texture as *mut _);
+            gl::GenTextures(1, &mut texture);
             gl::BindTexture(gl::TEXTURE_2D, texture);
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
-                gl::RED as i32,
+                gl::RGBA as i32,
                 font_face.glyph().bitmap().width(),
                 font_face.glyph().bitmap().rows(),
                 0,
-                gl::RED,
+                gl::RGBA,
                 gl::UNSIGNED_BYTE,
-                font_face.glyph().bitmap().buffer().as_ptr() as *const std::ffi::c_void,
+                font_face.glyph().bitmap().buffer().as_ptr() as *const _,
             );
 
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
@@ -181,17 +185,17 @@ fn draw_text(
     unsafe {
         gl::UseProgram(shader_program);
 
-        gl::Viewport(0, 0, WIN_SIZE.0 as gl::types::GLsizei, WIN_SIZE.1 as gl::types::GLsizei);
+        gl::Viewport(0, 0, WIN_SIZE.0 as GLsizei, WIN_SIZE.1 as GLsizei);
         gl::Uniform4f(
-            gl::GetUniformLocation(shader_program, "projection".as_ptr() as *const i8),
-            0.0,
-            0.0,
-            WIN_SIZE.0,
-            WIN_SIZE.1,
+            gl::GetUniformLocation(shader_program, b"projection\0".as_ptr() as *const _),
+            -1.0,
+            1.0,
+            -1.0,
+            1.0,
         );
 
         gl::Uniform3f(
-            gl::GetUniformLocation(shader_program, "textColor".as_ptr() as *const i8),
+            gl::GetUniformLocation(shader_program, b"textColor\0".as_ptr() as *const _),
             color.r,
             color.g,
             color.b,
@@ -221,7 +225,7 @@ fn draw_text(
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, character.tex_id);
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-            gl::BufferSubData(gl::ARRAY_BUFFER, 0, size_of_val(&verts) as isize, verts.as_ptr() as *const c_void);
+            gl::BufferSubData(gl::ARRAY_BUFFER, 0, size_of_val(&verts) as isize, verts.as_ptr() as *const _);
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::DrawArrays(gl::TRIANGLES, 0, 6);
         };
