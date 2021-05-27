@@ -81,6 +81,9 @@ fn main() {
         gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
     };
 
+    let v_color = unsafe { gl::GetUniformLocation(shader_program.id, b"kuler\0".as_ptr().cast()) };
+    dbg!(&v_color);
+
     event_loop.run(move |event, _window_target, control_flow| {
         *control_flow = ControlFlow::Wait;
 
@@ -104,6 +107,8 @@ fn main() {
                     gl::UseProgram(shader_program.id);
 
                     gl::Viewport(0, 0, WIN_SIZE.0 as i32, WIN_SIZE.1 as i32);
+
+                    gl::Uniform4f(v_color, 0.8, 0.2, 0.8, 1.0);
 
                     // gl::DrawArrays(gl::TRIANGLES, 0, 3);
 
