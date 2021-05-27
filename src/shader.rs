@@ -3,6 +3,25 @@ use super::gl::{
     types::{GLenum, GLint, GLuint},
 };
 
+pub struct TriShaderProgram {
+    pub id: GLuint,
+}
+
+impl TriShaderProgram {
+    pub fn new(shader_v: &str, shader_f: &str) -> Self {
+        let shader_v = create_shader(gl::VERTEX_SHADER, shader_v);
+        let shader_f = create_shader(gl::FRAGMENT_SHADER, shader_f);
+        let id = create_program(shader_v, shader_f);
+
+        unsafe {
+            gl::DeleteShader(shader_v);
+            gl::DeleteShader(shader_f);
+        }
+
+        Self { id }
+    }
+}
+
 pub struct CharShaderProgram {
     pub id: GLuint,
     pub projection: GLint,
@@ -34,7 +53,7 @@ impl CharShaderProgram {
 
         unsafe { gl::UseProgram(0) };
 
-        CharShaderProgram { id, projection, cell_dim, background }
+        Self { id, projection, cell_dim, background }
     }
 }
 
@@ -54,6 +73,8 @@ pub fn create_program(shader_v: GLuint, shader_f: GLuint) -> GLuint {
         let mut success = 0;
         gl::GetProgramiv(program, gl::LINK_STATUS, &mut success);
 
+        dbg!(&success);
+
         program
     }
 }
@@ -64,7 +85,7 @@ pub fn create_shader(kind: GLenum, source: &str) -> GLuint {
     let shader = unsafe {
         let shader = gl::CreateShader(kind);
 
-        gl::ShaderSource(shader, 1, &(source.as_ptr() as *const _), len.as_ptr());
+        gl::ShaderSource(shader, 1, &source.as_ptr().cast(), len.as_ptr());
         gl::CompileShader(shader);
 
         shader
@@ -72,6 +93,8 @@ pub fn create_shader(kind: GLenum, source: &str) -> GLuint {
 
     let mut success = 0;
     unsafe { gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success) };
+
+    dbg!(&success);
 
     shader
 }
