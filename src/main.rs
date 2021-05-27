@@ -47,15 +47,28 @@ fn main() {
     // let projection = glm::ortho(0.0, WIN_SIZE.0, 0.0, WIN_SIZE.1, 0.0, -10_000.0);
     // let identity = glm::Mat4::identity();
 
-    let vertices = [-0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.0, 0.5, 0.0f32];
+    // tri
+    // let vertices = [-0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.0, 0.5, 0.0f32];
+    // 2 tri = 1 rect
+    let verts = [0.5, 0.5, 0.0, 0.5, -0.5, 0.0, -0.5, -0.5, 0.0, -0.5, 0.5, 0.0f32];
+    let indices = [0, 1, 3, 1, 2, 3u32];
 
-    let (mut vao, mut vbo) = (0, 0);
+    let (mut vao, mut vbo, mut ebo) = (0, 0, 0);
     unsafe {
         gl::GenVertexArrays(1, &mut vao);
         gl::GenBuffers(1, &mut vbo);
+        gl::GenBuffers(1, &mut ebo);
         gl::BindVertexArray(vao);
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::BufferData(gl::ARRAY_BUFFER, size_of::<[f32; 9]>() as isize, vertices.as_ptr().cast(), gl::STATIC_DRAW);
+        // gl::BufferData(gl::ARRAY_BUFFER, size_of::<[f32; 9]>() as isize, vertices.as_ptr().cast(), gl::STATIC_DRAW);
+        gl::BufferData(gl::ARRAY_BUFFER, size_of::<[f32; 18]>() as isize, verts.as_ptr().cast(), gl::STATIC_DRAW);
+        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+        gl::BufferData(
+            gl::ELEMENT_ARRAY_BUFFER,
+            size_of::<[u32; 6]>() as isize,
+            indices.as_ptr().cast(),
+            gl::STATIC_DRAW,
+        );
     }
 
     let (shader_v, shader_f) = (include_str!("../shader/tri.v.glsl"), include_str!("../shader/tri.f.glsl"));
@@ -64,6 +77,8 @@ fn main() {
     unsafe {
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * size_of::<f32>() as i32, 0 as *const _);
         gl::EnableVertexAttribArray(0);
+
+        gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
     };
 
     event_loop.run(move |event, _window_target, control_flow| {
@@ -90,7 +105,9 @@ fn main() {
 
                     gl::Viewport(0, 0, WIN_SIZE.0 as i32, WIN_SIZE.1 as i32);
 
-                    gl::DrawArrays(gl::TRIANGLES, 0, 3);
+                    // gl::DrawArrays(gl::TRIANGLES, 0, 3);
+
+                    gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const _);
                 }
 
                 windowed_context.swap_buffers().unwrap();
