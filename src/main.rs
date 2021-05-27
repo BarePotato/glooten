@@ -6,9 +6,10 @@
 
 use std::{
     collections::HashMap,
+    convert::identity,
     ffi::c_void,
     mem::{size_of, size_of_val},
-    ptr::null,
+    ptr,
 };
 
 use freetype::{face::LoadFlag, Library};
@@ -65,7 +66,7 @@ fn main() {
     let font_face = font_lib
         .new_face("/usr/share/fonts/nerd-fonts-complete/OTF/Fira Code Regular Nerd Font Complete.otf", 0)
         .unwrap();
-    font_face.set_pixel_sizes(0, 24).unwrap();
+    font_face.set_pixel_sizes(0, 42).unwrap();
     // font_face.load_char('A' as usize, LoadFlag::RENDER).unwrap();
     // let glyph = font_face.glyph();
 
@@ -90,7 +91,7 @@ fn main() {
                 0,
                 gl::RGBA,
                 gl::UNSIGNED_BYTE,
-                font_face.glyph().bitmap().buffer().as_ptr() as *const _,
+                font_face.glyph().bitmap().buffer().as_ptr() as *const c_void,
             );
 
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
@@ -118,15 +119,17 @@ fn main() {
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
     };
 
-    let (vao, vbo) = (u32::default(), u32::default());
+    let projection = Matrix4::new_orthographic(0.0, WIN_SIZE.0, 0.0, WIN_SIZE.1, -10.0, 10.0);
+
+    let (mut vao, mut vbo) = (0, 0);
     unsafe {
-        gl::GenVertexArrays(1, vao as *mut u32);
-        gl::GenBuffers(1, vbo as *mut u32);
+        gl::GenVertexArrays(1, &mut vao);
+        gl::GenBuffers(1, &mut vbo);
         gl::BindVertexArray(vao);
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl::BufferData(gl::ARRAY_BUFFER, size_of::<f32>() as isize * 6 * 4, null(), gl::DYNAMIC_DRAW);
+        gl::BufferData(gl::ARRAY_BUFFER, size_of::<f32>() as isize * 6 * 4, ptr::null(), gl::DYNAMIC_DRAW);
         gl::EnableVertexAttribArray(0);
-        gl::VertexAttribPointer(0, 4, gl::FLOAT, gl::FALSE, 4 * size_of::<f32>() as i32, 0 as *const c_void);
+        gl::VertexAttribPointer(0, 4, gl::FLOAT, gl::FALSE, 4 * size_of::<f32>() as i32, 0 as *const _);
         gl::BindBuffer(gl::ARRAY_BUFFER, 0);
         gl::BindVertexArray(0);
     };
@@ -154,11 +157,11 @@ fn main() {
 
                 draw_text(
                     shader_program.id,
-                    "Some text",
+                    "Some text and more text and even more text.",
                     50.0,
                     50.0,
                     1.0,
-                    Color::rgb(255, 0, 0, 255).as_gl(),
+                    Color::rgb(255, 255, 255, 255).as_gl(),
                     vao,
                     vbo,
                     &characters,
@@ -185,14 +188,14 @@ fn draw_text(
     unsafe {
         gl::UseProgram(shader_program);
 
-        gl::Viewport(0, 0, WIN_SIZE.0 as GLsizei, WIN_SIZE.1 as GLsizei);
-        gl::Uniform4f(
-            gl::GetUniformLocation(shader_program, b"projection\0".as_ptr() as *const _),
-            -1.0,
-            1.0,
-            -1.0,
-            1.0,
-        );
+        // gl::Viewport(0, 0, WIN_SIZE.0 a//----------[  ]s GLsizei, WIN_SIZE.1 as GLsizei);
+        // gl::Uniform4f(
+        //     gl::GetUniformLocation(shader_program, b"projection\0".as_ptr() as *const _),
+        //     -1.0,
+        //     1.0,
+        //     -1.0,
+        //     1.0,
+        // );
 
         gl::Uniform3f(
             gl::GetUniformLocation(shader_program, b"textColor\0".as_ptr() as *const _),
