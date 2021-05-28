@@ -1,4 +1,8 @@
-use std::{collections::HashMap, mem::size_of, ptr::null};
+use std::{
+    collections::HashMap,
+    mem::{size_of, size_of_val},
+    ptr::null,
+};
 
 use glutin::{
     dpi::LogicalSize,
@@ -21,6 +25,16 @@ use shader::CharShaderProgram;
 
 const WIN_SIZE: (f32, f32) = (800.0, 600.0);
 
+type CharMap = HashMap<char, Char>;
+
+#[derive(Debug)]
+struct Char {
+    tex_id: u32,
+    size: glm::IVec2,
+    bearing: glm::IVec2,
+    advance: i64,
+}
+
 fn main() {
     let event_loop = EventLoop::new();
     let window_builder = WindowBuilder::new()
@@ -38,15 +52,8 @@ fn main() {
         lib.new_face("/usr/share/fonts/nerd-fonts-complete/OTF/Fira Code Regular Nerd Font Complete.otf", 0).unwrap();
     // face.set_char_size(40 * 64, 0, 50, 0).unwrap();
     face.set_pixel_sizes(0, 42).unwrap();
-    face.load_char('M' as usize, LoadFlag::RENDER).unwrap();
-    let glyph = face.glyph();
-
-    struct Char {
-        tex_id: u32,
-        size: glm::IVec2,
-        bearing: glm::IVec2,
-        advance: i64,
-    }
+    // face.load_char('M' as usize, LoadFlag::RENDER).unwrap();
+    // let glyph = face.glyph();
 
     let mut chars: HashMap<char, Char> = HashMap::new();
 
@@ -95,8 +102,7 @@ fn main() {
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
     };
 
-    let proj = glm::ortho(0.0, WIN_SIZE.0, 0.0, WIN_SIZE.1, 0.0, -42.0);
-    let identity = glm::Mat4::identity();
+    // let identity = glm::Mat4::identity();
 
     let (mut vao, mut vbo, mut ebo) = (0, 0, 0);
     unsafe {
@@ -126,15 +132,19 @@ fn main() {
     // let shader_program = shader::TriShaderProgram::new(shader_v, shader_f);
     let shader_program = shader::CharShaderProgram::new(shader_v, shader_f, vao, vbo);
 
-    unsafe {
-        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * size_of::<f32>() as i32, 0 as *const _);
-        gl::EnableVertexAttribArray(0);
+    let proj = glm::ortho(0.0, WIN_SIZE.0, 0.0, WIN_SIZE.1, 0.0, -42.0);
 
-        gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+    unsafe {
+        // gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * size_of::<f32>() as i32, 0 as *const _);
+        // gl::EnableVertexAttribArray(0);
+
+        // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+
+        // let proj_loc = gl::GetUniformLocation(shader_program.id, b"proj\0".as_ptr().cast());
+        gl::UniformMatrix4fv(shader_program.projection, 1, gl::FALSE, glm::value_ptr(&proj).as_ptr());
     };
 
-    let v_color = unsafe { gl::GetUniformLocation(shader_program.id, b"kuler\0".as_ptr().cast()) };
-    dbg!(&v_color);
+    // let v_color = unsafe { gl::GetUniformLocation(shader_program.id, b"kuler\0".as_ptr().cast()) };
 
     event_loop.run(move |event, _window_target, control_flow| {
         *control_flow = ControlFlow::Wait;
@@ -158,14 +168,22 @@ fn main() {
                 unsafe {
                     // gl::UseProgram(shader_program.id);
 
-                    gl::Viewport(0, 0, WIN_SIZE.0 as i32, WIN_SIZE.1 as i32);
+                    // gl::Viewport(0, 0, WIN_SIZE.0 as i32, WIN_SIZE.1 as i32);
 
                     // gl::Uniform4f(v_color, 0.8, 0.2, 0.8, 1.0);
 
                     // gl::DrawArrays(gl::TRIANGLES, 0, 3);
-                    draw_text(&shader_program, "The cow goes meh.", 0.5, 0.5, 1.0, &Color::rgb(200, 30, 30, 255));
+                    draw_text(
+                        &shader_program,
+                        &chars,
+                        "The cow goes meh.",
+                        0.5,
+                        0.5,
+                        1.0,
+                        &Color::rgb(200, 30, 30, 255),
+                    );
 
-                    gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const _);
+                    // gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const _);
                 }
 
                 windowed_context.swap_buffers().unwrap();
@@ -175,7 +193,7 @@ fn main() {
     });
 }
 
-fn draw_text(program: &CharShaderProgram, text: &str, x: f32, y: f32, scale: f32, color: &Color) {
+fn draw_text(program: &CharShaderProgram, chars: &CharMap, text: &str, mut x: f32, y: f32, scale: f32, color: &Color) {
     let color = color.as_gl();
 
     unsafe {
@@ -185,12 +203,44 @@ fn draw_text(program: &CharShaderProgram, text: &str, x: f32, y: f32, scale: f32
         gl::Uniform4f(kuler, color.r, color.g, color.b, color.a);
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindVertexArray(program.vao);
+    }
 
-        for c in text {
+    for c in text.chars() {
+        let c = chars.get(&c).unwrap();
 
+        let posx = (x + c.bearing.x as f32) * scale;
+        let posy = (y - (c.size.y - c.bearing.y) as f32) * scale;
+
+        let w = c.size.x as f32 * scale;
+        let h = c.size.y as f32 * scale;
+
+        let verts = [
+            [posx, posy + h, 0.0, 0.0f32],
+            [posx, posy, 0.0, 1.0],
+            [posx + w, posy, 1.0, 1.0],
+            [posx, posy + h, 0.0, 0.0],
+            [posx + w, posy, 1.0, 1.0],
+            [posx, posy + h, 1.0, 0.0],
+        ];
+
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, c.tex_id);
+            gl::BindBuffer(gl::ARRAY_BUFFER, program.vbo);
+            gl::BufferSubData(gl::ARRAY_BUFFER, 0, size_of_val(&verts) as isize, verts.as_ptr().cast());
+            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+
+            gl::DrawArrays(gl::TRIANGLES, 0, 6);
         }
+
+        x += (c.advance >> 6) as f32 * scale;
+    }
+
+    unsafe {
+        gl::BindVertexArray(0);
+        gl::BindTexture(gl::TEXTURE_2D, 0);
     }
 }
+
 fn make_current_context(
     windowed_context: ContextWrapper<NotCurrent, GlutinWindow>,
 ) -> ContextWrapper<PossiblyCurrent, GlutinWindow> {

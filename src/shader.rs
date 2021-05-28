@@ -22,6 +22,7 @@ impl TriShaderProgram {
     }
 }
 
+#[derive(Debug)]
 pub struct CharShaderProgram {
     pub id: GLuint,
     pub projection: GLint,
