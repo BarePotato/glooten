@@ -189,6 +189,7 @@ fn main() {
                 }
 
                 windowed_context.swap_buffers().unwrap();
+                windowed_context.window().request_redraw();
             }
             _ => {}
         }
