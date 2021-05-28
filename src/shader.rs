@@ -25,12 +25,12 @@ impl TriShaderProgram {
 pub struct CharShaderProgram {
     pub id: GLuint,
     pub projection: GLint,
-    pub cell_dim: GLint,
-    pub background: GLint,
+    pub vao: u32,
+    pub vbo: u32,
 }
 
 impl CharShaderProgram {
-    pub fn new(shader_v: &str, shader_f: &str) -> Self {
+    pub fn new(shader_v: &str, shader_f: &str, vao: u32, vbo: u32) -> Self {
         let shader_v = create_shader(gl::VERTEX_SHADER, shader_v);
         let shader_f = create_shader(gl::FRAGMENT_SHADER, shader_f);
         let id = create_program(shader_v, shader_f);
@@ -41,19 +41,13 @@ impl CharShaderProgram {
             gl::UseProgram(id);
         }
 
-        let (projection, cell_dim, background) = unsafe {
-            (
-                gl::GetUniformLocation(id, b"projection\0".as_ptr() as *const _),
-                gl::GetUniformLocation(id, b"cellDim\0".as_ptr() as *const _),
-                gl::GetUniformLocation(id, b"backgroundPass\0".as_ptr() as *const _),
-            )
-        };
+        let projection = unsafe { gl::GetUniformLocation(id, b"proj\0".as_ptr() as *const _) };
 
         // TODO: assert valid uniform
 
         unsafe { gl::UseProgram(0) };
 
-        Self { id, projection, cell_dim, background }
+        Self { id, projection, vao, vbo }
     }
 }
 
