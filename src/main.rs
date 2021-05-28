@@ -40,6 +40,7 @@ fn main() {
     let window_builder = WindowBuilder::new()
         .with_title("GL Font Things, Oof!")
         .with_resizable(false)
+        .with_transparent(true)
         .with_inner_size(LogicalSize::new(WIN_SIZE.0, WIN_SIZE.1));
 
     let windowed_context =
@@ -57,6 +58,14 @@ fn main() {
 
     let mut chars: HashMap<char, Char> = HashMap::new();
 
+    unsafe {
+        gl::Enable(gl::CULL_FACE);
+        gl::Enable(gl::BLEND);
+        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+
+        gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1)
+    };
+
     for c in 0..128u8 {
         face.load_char(c as usize, LoadFlag::RENDER).unwrap();
         let glyph = face.glyph();
@@ -64,8 +73,6 @@ fn main() {
 
         let mut tex_id = 0u32;
         unsafe {
-            gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
-
             gl::GenTextures(1, &mut tex_id);
             gl::BindTexture(gl::TEXTURE_2D, tex_id);
             gl::TexImage2D(
@@ -97,14 +104,9 @@ fn main() {
         }
     }
 
-    unsafe {
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-    };
-
     // let identity = glm::Mat4::identity();
 
-    let (mut vao, mut vbo, mut ebo) = (0, 0, 0);
+    let (mut vao, mut vbo, mut _ebo) = (0, 0, 0);
     unsafe {
         gl::GenVertexArrays(1, &mut vao);
         gl::GenBuffers(1, &mut vbo);
@@ -168,7 +170,7 @@ fn main() {
                 unsafe {
                     // gl::UseProgram(shader_program.id);
 
-                    // gl::Viewport(0, 0, WIN_SIZE.0 as i32, WIN_SIZE.1 as i32);
+                    gl::Viewport(0, 0, WIN_SIZE.0 as i32, WIN_SIZE.1 as i32);
 
                     // gl::Uniform4f(v_color, 0.8, 0.2, 0.8, 1.0);
 
@@ -180,7 +182,7 @@ fn main() {
                         0.5,
                         0.5,
                         1.0,
-                        &Color::rgb(200, 30, 30, 255),
+                        &Color::rgb(255, 255, 255, 255),
                     );
 
                     // gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const _);
@@ -200,7 +202,7 @@ fn draw_text(program: &CharShaderProgram, chars: &CharMap, text: &str, mut x: f3
         gl::UseProgram(program.id);
 
         let kuler = gl::GetUniformLocation(program.id, b"kuler\0".as_ptr().cast());
-        gl::Uniform4f(kuler, color.r, color.g, color.b, color.a);
+        gl::Uniform3f(kuler, color.r, color.g, color.b);
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindVertexArray(program.vao);
     }

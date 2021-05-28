@@ -3,10 +3,10 @@ in vec2 TexCoords;
 out vec4 color;
 
 uniform sampler2D text;
-uniform vec4 kuler;
+uniform vec3 kuler;
 
 void main()
 {    
     vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
-    color = kuler * sampled;
+    color = vec4(kuler, 1.0) * sampled;
 }
