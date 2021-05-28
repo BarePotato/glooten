@@ -12,8 +12,6 @@ use glutin::{
     ContextBuilder, ContextWrapper, NotCurrent, PossiblyCurrent,
 };
 
-use freetype::{face::LoadFlag, Library};
-
 use nalgebra_glm as glm;
 
 pub(crate) mod gl {
@@ -37,13 +35,6 @@ fn main() {
         make_current_context(ContextBuilder::new().build_windowed(window_builder, &event_loop).unwrap());
 
     gl::load_with(|c_ptr| windowed_context.get_proc_address(c_ptr) as *const _);
-
-    let lib = Library::init().unwrap();
-    let face =
-        lib.new_face("/usr/share/fonts/nerd-fonts-complete/OTF/Fira Code Regular Nerd Font Complete.otf", 0).unwrap();
-    face.set_char_size(40 * 64, 0, 50, 0).unwrap();
-    face.load_char('M' as usize, LoadFlag::RENDER).unwrap();
-    let glyph = face.glyph();
 
     // we were forcing 1 color, red
     // unsafe { gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1) };
