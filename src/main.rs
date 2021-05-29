@@ -124,6 +124,7 @@ fn main() {
     let proj = glm::ortho(0.0, WIN_SIZE.0, 0.0, WIN_SIZE.1, 10.0, -10.0);
 
     unsafe {
+        gl::UseProgram(shader_program.id);
         gl::UniformMatrix4fv(shader_program.projection, 1, gl::FALSE, glm::value_ptr(&proj).as_ptr());
     };
 
@@ -153,15 +154,44 @@ fn main() {
                         &shader_program,
                         &chars,
                         "The cow goes meh.",
-                        0.5,
-                        0.5,
+                        5.0,
+                        5.0,
                         1.0,
                         &Color::rgb(200, 200, 200, 255),
+                    );
+
+                    draw_text(
+                        &shader_program,
+                        &chars,
+                        "Thanks g0rg! LUL",
+                        150.0,
+                        500.0,
+                        1.0,
+                        &Color::rgb(200, 30, 30, 255),
+                    );
+
+                    draw_text(
+                        &shader_program,
+                        &chars,
+                        "The answer is in #rust",
+                        20.0,
+                        300.0,
+                        1.0,
+                        &Color::rgb(20, 90, 130, 255),
+                    );
+                    draw_text(
+                        &shader_program,
+                        &chars,
+                        "Missed a gl::UseProgram(id)",
+                        20.0,
+                        240.0,
+                        1.0,
+                        &Color::rgb(20, 90, 130, 255),
                     );
                 }
 
                 windowed_context.swap_buffers().unwrap();
-                windowed_context.window().request_redraw();
+                // windowed_context.window().request_redraw();
             }
             _ => {}
         }
@@ -195,7 +225,7 @@ fn draw_text(program: &CharShaderProgram, chars: &CharMap, text: &str, mut x: f3
             [posx + w, posy, 1.0, 1.0],
             [posx, posy + h, 0.0, 0.0],
             [posx + w, posy, 1.0, 1.0],
-            [posx, posy + h, 1.0, 0.0],
+            [posx + w, posy + h, 1.0, 0.0],
         ];
 
         unsafe {
