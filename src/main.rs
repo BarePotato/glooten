@@ -5,7 +5,7 @@ use std::{
 };
 
 use glutin::{
-    dpi::LogicalSize,
+    dpi::{LogicalSize, PhysicalSize},
     event::{Event as GlutinEvent, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::{Window as GlutinWindow, WindowBuilder},
@@ -53,13 +53,10 @@ fn main() {
         lib.new_face("/usr/share/fonts/nerd-fonts-complete/OTF/Fira Code Regular Nerd Font Complete.otf", 0).unwrap();
     // face.set_char_size(40 * 64, 0, 50, 0).unwrap();
     face.set_pixel_sizes(0, 42).unwrap();
-    // face.load_char('M' as usize, LoadFlag::RENDER).unwrap();
-    // let glyph = face.glyph();
 
     let mut chars: HashMap<char, Char> = HashMap::new();
 
     unsafe {
-        gl::Enable(gl::CULL_FACE);
         gl::Enable(gl::BLEND);
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
@@ -78,7 +75,7 @@ fn main() {
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
-                gl::RED as i32,
+                gl::RED as gl::types::GLint,
                 bitmap.width(),
                 bitmap.rows(),
                 0,
@@ -104,49 +101,31 @@ fn main() {
         }
     }
 
+    unsafe { gl::BindTexture(gl::TEXTURE_2D, 0) };
+
     // let identity = glm::Mat4::identity();
 
     let (mut vao, mut vbo, mut _ebo) = (0, 0, 0);
     unsafe {
         gl::GenVertexArrays(1, &mut vao);
         gl::GenBuffers(1, &mut vbo);
-        // gl::GenBuffers(1, &mut ebo);
         gl::BindVertexArray(vao);
         gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-        // gl::BufferData(gl::ARRAY_BUFFER, size_of::<[f32; 9]>() as isize, vertices.as_ptr().cast(), gl::STATIC_DRAW);
-        // gl::BufferData(gl::ARRAY_BUFFER, size_of::<[f32; 18]>() as isize, verts.as_ptr().cast(), gl::STATIC_DRAW);
         gl::BufferData(gl::ARRAY_BUFFER, size_of::<f32>() as isize * 6 * 4, null(), gl::DYNAMIC_DRAW);
         gl::EnableVertexAttribArray(0);
-        gl::VertexAttribPointer(0, 4, gl::FLOAT, gl::FALSE, 4 * size_of::<f32>() as i32, null());
+        gl::VertexAttribPointer(0, 4, gl::FLOAT, gl::FALSE, 4 * size_of::<f32>() as i32, 0 as *const _);
         gl::BindBuffer(gl::ARRAY_BUFFER, 0);
         gl::BindVertexArray(0);
-        // gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
-        // gl::BufferData(
-        //     gl::ELEMENT_ARRAY_BUFFER,
-        //     size_of::<[u32; 6]>() as isize,
-        //     indices.as_ptr().cast(),
-        //     gl::STATIC_DRAW,
-        // );
     }
 
-    // let (shader_v, shader_f) = (include_str!("../shader/tri.v.glsl"), include_str!("../shader/tri.f.glsl"));
     let (shader_v, shader_f) = (include_str!("../shader/char.v.glsl"), include_str!("../shader/char.f.glsl"));
-    // let shader_program = shader::TriShaderProgram::new(shader_v, shader_f);
     let shader_program = shader::CharShaderProgram::new(shader_v, shader_f, vao, vbo);
 
-    let proj = glm::ortho(0.0, WIN_SIZE.0, 0.0, WIN_SIZE.1, 0.0, -42.0);
+    let proj = glm::ortho(0.0, WIN_SIZE.0, 0.0, WIN_SIZE.1, 10.0, -10.0);
 
     unsafe {
-        // gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * size_of::<f32>() as i32, 0 as *const _);
-        // gl::EnableVertexAttribArray(0);
-
-        // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-
-        // let proj_loc = gl::GetUniformLocation(shader_program.id, b"proj\0".as_ptr().cast());
         gl::UniformMatrix4fv(shader_program.projection, 1, gl::FALSE, glm::value_ptr(&proj).as_ptr());
     };
-
-    // let v_color = unsafe { gl::GetUniformLocation(shader_program.id, b"kuler\0".as_ptr().cast()) };
 
     event_loop.run(move |event, _window_target, control_flow| {
         *control_flow = ControlFlow::Wait;
@@ -168,13 +147,8 @@ fn main() {
                 clear_buffer(&Color::eight);
 
                 unsafe {
-                    // gl::UseProgram(shader_program.id);
-
                     gl::Viewport(0, 0, WIN_SIZE.0 as i32, WIN_SIZE.1 as i32);
 
-                    // gl::Uniform4f(v_color, 0.8, 0.2, 0.8, 1.0);
-
-                    // gl::DrawArrays(gl::TRIANGLES, 0, 3);
                     draw_text(
                         &shader_program,
                         &chars,
@@ -182,10 +156,8 @@ fn main() {
                         0.5,
                         0.5,
                         1.0,
-                        &Color::rgb(255, 255, 255, 255),
+                        &Color::rgb(200, 200, 200, 255),
                     );
-
-                    // gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const _);
                 }
 
                 windowed_context.swap_buffers().unwrap();
@@ -229,7 +201,7 @@ fn draw_text(program: &CharShaderProgram, chars: &CharMap, text: &str, mut x: f3
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, c.tex_id);
             gl::BindBuffer(gl::ARRAY_BUFFER, program.vbo);
-            gl::BufferSubData(gl::ARRAY_BUFFER, 0, size_of_val(&verts) as isize, verts.as_ptr().cast());
+            gl::BufferSubData(gl::ARRAY_BUFFER, 0, size_of_val(&verts) as isize, verts.as_ptr() as *const _);
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
 
             gl::DrawArrays(gl::TRIANGLES, 0, 6);

@@ -42,7 +42,7 @@ impl CharShaderProgram {
             gl::UseProgram(id);
         }
 
-        let projection = unsafe { gl::GetUniformLocation(id, b"proj\0".as_ptr() as *const _) };
+        let projection = unsafe { gl::GetUniformLocation(id, b"projection\0".as_ptr().cast()) };
 
         // TODO: assert valid uniform
 
