@@ -45,11 +45,17 @@ fn main() {
             },
             GlutinEvent::RedrawRequested(_) => {
                 clear_buffer(&Color::eight);
+
+                draw(&windowed_context);
+
                 windowed_context.swap_buffers().unwrap();
             }
             _ => {}
         }
     });
+}
+
+fn draw(windowed_context: &ContextWrapper<PossiblyCurrent, GlutinWindow>){
 }
 
 fn clear_buffer(color: &Color) {
