@@ -39,8 +39,8 @@ fn main() {
     let event_loop = EventLoop::new();
     let window_builder = WindowBuilder::new()
         .with_title("GL Font Things, Oof!")
-        .with_resizable(false)
-        .with_transparent(true)
+        .with_resizable(true)
+        // .with_transparent(true)
         .with_inner_size(LogicalSize::new(WIN_SIZE.0, WIN_SIZE.1));
 
     let windowed_context =
@@ -52,7 +52,7 @@ fn main() {
     let face =
         lib.new_face("/usr/share/fonts/nerd-fonts-complete/OTF/Fira Code Regular Nerd Font Complete.otf", 0).unwrap();
     // face.set_char_size(40 * 64, 0, 50, 0).unwrap();
-    face.set_pixel_sizes(0, 42).unwrap();
+    face.set_pixel_sizes(0, 16).unwrap();
 
     let mut chars: HashMap<char, Char> = HashMap::new();
 
@@ -150,12 +150,14 @@ fn main() {
                 unsafe {
                     gl::Viewport(0, 0, WIN_SIZE.0 as i32, WIN_SIZE.1 as i32);
 
+                    let why = 4.0;
+
                     draw_text(
                         &shader_program,
                         &chars,
                         "The cow goes meh.",
-                        5.0,
-                        5.0,
+                        0.0,
+                        0.0,
                         1.0,
                         &Color::rgb(200, 200, 200, 255),
                     );
@@ -164,8 +166,8 @@ fn main() {
                         &shader_program,
                         &chars,
                         "Thanks g0rg! LUL",
-                        150.0,
-                        500.0,
+                        0.0,
+                        16.0,
                         1.0,
                         &Color::rgb(200, 30, 30, 255),
                     );
@@ -174,8 +176,8 @@ fn main() {
                         &shader_program,
                         &chars,
                         "The answer is in #rust",
-                        20.0,
-                        300.0,
+                        0.0,
+                        16.0 * 2.0,
                         1.0,
                         &Color::rgb(20, 90, 130, 255),
                     );
@@ -184,7 +186,7 @@ fn main() {
                         &chars,
                         "Missed a gl::UseProgram(id)",
                         20.0,
-                        240.0,
+                        16.0 * 3.0,
                         1.0,
                         &Color::rgb(20, 90, 130, 255),
                     );
